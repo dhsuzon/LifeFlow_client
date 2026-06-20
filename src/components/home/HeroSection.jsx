@@ -16,11 +16,11 @@ const HeroSection = () => {
 
   useEffect(() => {
     setIsMounted(true);
-  }, [isMounted]);
+  }, []);
 
   if (!isMounted) {
     return (
-      <section className="w-full h-150 bg-zinc-950 flex items-center justify-center">
+      <section className="w-full h-125 bg-zinc-950 flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-danger border-t-transparent rounded-full animate-spin"></div>
       </section>
     );
@@ -53,8 +53,8 @@ const HeroSection = () => {
             />
 
             <div className="absolute inset-0 bg-black/50" />
-            <div className="absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center h-full z-10 text-white">
-              <div className="max-w-2xl space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            <div className="absolute inset-0 max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 flex flex-col justify-center h-full z-10 text-white">
+              <div className="max-w-lg md:max-w-2xl space-y-3 md:space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
                   {slide.title}
                 </h1>
@@ -62,17 +62,17 @@ const HeroSection = () => {
                   {slide.description}
                 </p>
 
-                <div className="flex flex-wrap gap-4 pt-2">
+                <div className="flex flex-wrap gap-3 md:gap-4 pt-2">
                   <Link
                     href="/auth/register"
-                    className="inline-flex items-center justify-center gap-2 bg-danger text-white font-bold h-12 px-6 rounded-full hover:bg-danger-600 transition-all active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 bg-danger text-white font-bold h-11 md:h-12 px-5 md:px-6 rounded-full hover:bg-danger-600 transition-all active:scale-95 text-sm md:text-base"
                   >
                     <FaUserPlus className="text-lg" />
                     <span>Join as a donor</span>
                   </Link>
                   <Link
                     href="/search"
-                    className="inline-flex items-center justify-center gap-2 border-2 border-white text-white font-bold h-12 px-6 rounded-full bg-transparent hover:bg-white hover:text-black transition-all active:scale-95"
+                    className="inline-flex items-center justify-center gap-2 border-2 border-white text-white font-bold h-11 md:h-12 px-5 md:px-6 rounded-full bg-transparent hover:bg-white hover:text-black transition-all active:scale-95 text-sm md:text-base"
                   >
                     <FaSearch className="text-sm" />
                     <span>Search Donors</span>

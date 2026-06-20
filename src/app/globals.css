@@ -1,20 +1,27 @@
 @import "tailwindcss";
 @import "@heroui/styles";
+@import "tailwindcss";
+@import "@heroui/styles";
+
 /* Swiper Custom Styles */
 .swiper-pagination-bullet-active {
   background: #f31260 !important;
+
   width: 24px !important;
+
   border-radius: 4px !important;
 }
 
 .swiper-pagination-bullet {
   background: #ffffff;
+
   opacity: 0.6;
 }
 
 .swiper-button-next,
 .swiper-button-prev {
   color: #f31260 !important;
+
   transform: scale(0.7);
 }
 
