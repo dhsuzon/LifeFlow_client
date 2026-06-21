@@ -19,6 +19,7 @@ import {
   FaSignOutAlt,
   FaSignInAlt,
   FaUserPlus,
+  FaHome,
 } from "react-icons/fa";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -113,14 +114,14 @@ const NavbarClient = ({ InitialUser }) => {
                   </div>
                 </span>
               </Dropdown.Trigger>
-              <Dropdown.Popover className="w-60 p-2 bg-background border border-default-200 shadow-xl rounded-xl mt-1">
+              <Dropdown.Popover className="w-50 p-2 bg-background border border-default-200 shadow-xl rounded-xl mt-1">
                 <Dropdown.Menu>
                   <Dropdown.Section>
                     <Header className="px-2 py-1 text-xs font-semibold text-default-400">
                       Account info
                     </Header>
-                    <Dropdown.Item className="px-2 py-1">
-                      <Label className="text-sm text-default-500 truncate">
+                    <Dropdown.Item className="px-2 py-2">
+                      <Label className="text-sm text-default-500  text-wrap">
                         {user.email}
                       </Label>
                     </Dropdown.Item>
@@ -128,12 +129,23 @@ const NavbarClient = ({ InitialUser }) => {
                   <Separator className="my-1 border-default-100" />
                   <Dropdown.Item className="p-2 hover:bg-default-100 rounded-lg">
                     <Link
-                      href={`/dashboard/${user.role.toLowerCase()}`}
+                      href={`/dashboard`}
                       className="flex items-center gap-2.5 w-full"
                     >
                       <FaThLarge className="text-base text-default-500" />
                       <Label className="text-sm font-medium text-foreground cursor-pointer">
                         Dashboard
+                      </Label>
+                    </Link>
+                  </Dropdown.Item>
+                  <Dropdown.Item className="p-2 hover:bg-default-100 rounded-lg">
+                    <Link
+                      href={`/`}
+                      className="flex items-center gap-2.5 w-full"
+                    >
+                      <FaHome className="text-base text-default-500" />
+                      <Label className="text-sm font-medium text-foreground cursor-pointer">
+                        Home
                       </Label>
                     </Link>
                   </Dropdown.Item>
