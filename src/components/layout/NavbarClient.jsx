@@ -1,6 +1,14 @@
 "use client";
 import React, { useState } from "react";
-import { Dropdown, Button, Label, Header, Separator } from "@heroui/react";
+import {
+  Dropdown,
+  Button,
+  Label,
+  Header,
+  Separator,
+  Avatar,
+  Toast,
+} from "@heroui/react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -10,24 +18,22 @@ import {
   FaThLarge,
   FaSignOutAlt,
   FaSignInAlt,
+  FaUserPlus,
 } from "react-icons/fa";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
-const NavbarClient = () => {
+const NavbarClient = ({ InitialUser }) => {
+  const Router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const { data: session, isPending } = authClient.useSession();
+  const user = isPending ? InitialUser : session?.user;
 
-  const handleLogout = () => {
-    setUser(null);
-    setIsMobileMenuOpen(false);
-  };
-
-  const handleLoginSimulate = () => {
-    setUser({
-      name: "Suzon",
-      email: "suzon@blooddonation.com",
-      role: "Admin",
-      image:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop",
+  const handleLogout = async () => {
+    await authClient.signOut();
+    toast.success(`${user?.name ? user.name : ""} Logout sucessfully`, {
+      onClose: () => Router.push("/auth/login"),
     });
   };
 
@@ -65,35 +71,38 @@ const NavbarClient = () => {
               Funding
             </Link>
           )}
-          <button
-            onClick={user ? handleLogout : handleLoginSimulate}
-            className="text-[11px] bg-default-100 text-default-500 hover:text-danger px-2 py-1 rounded border border-default-300 transition-colors font-mono"
-          >
-            {user ? "[Simulate LogOut]" : "[Simulate LogIn]"}
-          </button>
         </div>
 
         <div className="flex items-center">
           {!user ? (
-            <Link
-              href="/auth/login"
-              className="flex items-center gap-2 bg-danger/10 hover:bg-danger/20 text-danger font-bold px-4 py-2 rounded-full border border-danger/20 text-sm transition-all active:scale-95"
-            >
-              <FaSignInAlt className="text-base" />
-              <span>Login</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              {/* Button Shape Login */}
+              <Link
+                href="/auth/login"
+                className="flex items-center gap-2 border border-default-300 bg-default-50 text-foreground hover:bg-default-100 px-5 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
+              >
+                <FaSignInAlt className="text-sm" />
+                <span>Sign In</span>
+              </Link>
+              {/* Button Shape Register */}
+              <Link
+                href="/auth/register"
+                className="flex items-center gap-2 bg-danger text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-danger/90 transition-all active:scale-95"
+              >
+                <FaUserPlus className="text-sm" />
+                <span>Sign Up</span>
+              </Link>
+            </div>
           ) : (
             <Dropdown>
               <Dropdown.Trigger>
                 <span className="flex items-center gap-3 p-1 rounded-xl hover:opacity-80 cursor-pointer select-none">
-                  <Image
-                    src={user.image}
-                    alt={user.name}
-                    width={40}
-                    height={40}
-                    unoptimized
-                    className="w-10 h-10 rounded-full border-2 border-danger object-cover shadow-md"
-                  />
+                  <Avatar className="w-10 h-10 border-2 border-danger shadow-md object-cover">
+                    <Avatar.Image src={user.image} alt={user.name} />
+                    <Avatar.Fallback>
+                      {user.name.charAt(0).toUpperCase()}
+                    </Avatar.Fallback>
+                  </Avatar>
                   <div className="hidden sm:flex flex-col items-start">
                     <h4 className="text-sm font-bold text-foreground leading-none">
                       {user.name}
@@ -147,6 +156,7 @@ const NavbarClient = () => {
         </div>
       </nav>
 
+      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-background border-t border-default-200 p-4 flex flex-col gap-4">
           <Link
@@ -164,6 +174,24 @@ const NavbarClient = () => {
             >
               Funding
             </Link>
+          )}
+          {!user && (
+            <div className="flex flex-col gap-3 pt-2">
+              <Link
+                href="/auth/login"
+                className="flex items-center justify-center gap-2 border border-default-200 text-foreground py-2 rounded-lg font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <FaSignInAlt /> Sign In
+              </Link>
+              <Link
+                href="/auth/register"
+                className="flex items-center justify-center gap-2 bg-danger text-white py-2 rounded-lg font-bold"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <FaUserPlus /> Sign Up
+              </Link>
+            </div>
           )}
         </div>
       )}
