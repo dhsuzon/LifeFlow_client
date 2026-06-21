@@ -77,7 +77,6 @@ const NavbarClient = ({ InitialUser }) => {
         <div className="flex items-center">
           {!user ? (
             <div className="flex items-center gap-3">
-              {/* Button Shape Login */}
               <Link
                 href="/auth/login"
                 className="flex items-center gap-2 border border-default-300 bg-default-50 text-foreground hover:bg-default-100 px-5 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
@@ -85,7 +84,7 @@ const NavbarClient = ({ InitialUser }) => {
                 <FaSignInAlt className="text-sm" />
                 <span>Sign In</span>
               </Link>
-              {/* Button Shape Register */}
+
               <Link
                 href="/auth/register"
                 className="flex items-center gap-2 bg-danger text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-danger/90 transition-all active:scale-95"
@@ -99,7 +98,12 @@ const NavbarClient = ({ InitialUser }) => {
               <Dropdown.Trigger>
                 <span className="flex items-center gap-3 p-1 rounded-xl hover:opacity-80 cursor-pointer select-none">
                   <Avatar className="w-10 h-10 border-2 border-danger shadow-md object-cover">
-                    <Avatar.Image src={user.image} alt={user.name} />
+                    <Avatar.Image
+                      src={
+                        user?.image ? user.image : "/images/default_profile.jpg"
+                      }
+                      alt={user.name}
+                    />
                     <Avatar.Fallback>
                       {user.name.charAt(0).toUpperCase()}
                     </Avatar.Fallback>

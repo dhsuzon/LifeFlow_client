@@ -70,7 +70,6 @@ const SidebarDrawer = ({ role = "donor" }) => {
 
   const menuItems = getMenuItems(role);
 
-  // লিঙ্ক ক্লিকের সমস্যা সমাধানের জন্য সরাসরি Link ব্যবহার করা হয়েছে
   const renderMenuItems = () => (
     <div className="flex flex-col gap-2">
       <div className="px-4 py-2 text-xs font-semibold text-default-400">
@@ -97,7 +96,6 @@ const SidebarDrawer = ({ role = "donor" }) => {
 
   return (
     <>
-      {/* মোবাইলের বাটন - ফুটারে না লেগে থাকার জন্য bottom-20 */}
       <div className="md:hidden fixed bottom-20 left-6 z-50">
         <Button
           isIconOnly
@@ -113,7 +111,6 @@ const SidebarDrawer = ({ role = "donor" }) => {
         </Button>
       </div>
 
-      {/* ড্রয়ার (মোবাইল) */}
       <Drawer
         isOpen={isOpen}
         onOpenChange={setIsOpen}
@@ -141,7 +138,6 @@ const SidebarDrawer = ({ role = "donor" }) => {
         </Drawer.Content>
       </Drawer>
 
-      {/* ডেস্কটপ সাইডবার - top-20 এবং bottom-20 ব্যবহার করা হয়েছে যাতে ন্যাপবার বা ফুটারের সাথে না লাগে */}
       <div className="hidden md:block w-64 fixed left-0 top-20 bottom-20 border-r border-default-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pt-4 shadow-sm overflow-y-auto rounded-r-2xl">
         <div className="px-6 pb-6 flex items-center gap-2">
           <FaHeartbeat className="text-danger text-2xl animate-pulse" />
