@@ -22,6 +22,9 @@ const ContactSection = () => {
           Your small contribution can save a life. Reach out for blood requests
           or to become a hero donor.
         </p>
+        <p className="mt-3 font-bold text-danger">
+          Emergency contact: +880 1700-000000
+        </p>
       </div>
       <div className="bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-3xl border border-gray-200 dark:border-zinc-800 shadow-lg dark:shadow-zinc-700/10">
         <Form className="grid grid-cols-1 lg:grid-cols-2 gap-8">

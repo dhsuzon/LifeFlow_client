@@ -1,3 +1,5 @@
+"use client";
+
 import { featuredData } from "@/data/FeatureData";
 import { Card } from "@heroui/react";
 
