@@ -1,14 +1,17 @@
 import SidebarDrawer from "@/components/dashboardsidebaritem/SidebarDrawer";
 import { getLoggedSessionUser } from "@/lib/actions/session";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({ children }) {
   const user = await getLoggedSessionUser();
 
-  return (
-    <div className="flex min-h-screen  bg-default-50">
-      <SidebarDrawer role={user?.role} />
+  if (!user) redirect("/auth/login");
 
-      <main className="flex-1 md:ml-64  p-4 md:p-8">
+  return (
+    <div className="flex min-h-dvh bg-default-50">
+      <SidebarDrawer role={user.role} />
+
+      <main className="min-w-0 flex-1 p-3 pt-20 sm:p-5 sm:pt-20 md:ml-64 md:p-8">
         <div className="max-w-7xl mx-auto">{children}</div>
       </main>
     </div>

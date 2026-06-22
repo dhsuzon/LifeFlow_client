@@ -1,6 +1,4 @@
-import React from "react";
 import Link from "next/link";
-import { Separator } from "@heroui/react";
 import { FaHeartbeat } from "react-icons/fa";
 import {
   FaFacebook,
@@ -86,7 +84,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <Separator className="my-8 bg-zinc-200 dark:bg-zinc-800" />
+      <hr className="my-8 border-zinc-200 dark:border-zinc-800" />
 
       <div className="max-w-7xl mx-auto text-center">
         <p className="text-gray-500 text-sm">

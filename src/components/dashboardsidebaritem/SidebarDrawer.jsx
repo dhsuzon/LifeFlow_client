@@ -46,6 +46,11 @@ const SidebarDrawer = ({ role = "donor" }) => {
         return [
           ...commonMenu,
           {
+            name: "Create Request",
+            path: "/dashboard/create-donation-request",
+            icon: <FaPlusCircle />,
+          },
+          {
             name: "All Requests",
             path: "/dashboard/all-blood-donation-request",
             icon: <FaTint />,
@@ -96,7 +101,7 @@ const SidebarDrawer = ({ role = "donor" }) => {
 
   return (
     <>
-      <div className="md:hidden fixed bottom-20 left-6 z-50">
+      <div className="fixed left-4 top-4 z-50 md:hidden">
         <Button
           isIconOnly
           radius="full"
@@ -138,13 +143,13 @@ const SidebarDrawer = ({ role = "donor" }) => {
         </Drawer.Content>
       </Drawer>
 
-      <div className="hidden md:block w-64 fixed left-0 top-20 bottom-20 border-r border-default-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pt-4 shadow-sm overflow-y-auto rounded-r-2xl">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 overflow-y-auto border-r border-default-200 bg-white pt-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 md:block">
         <div className="px-6 pb-6 flex items-center gap-2">
           <FaHeartbeat className="text-danger text-2xl animate-pulse" />
           <h1 className="text-2xl font-extrabold text-danger">LifeFlow</h1>
         </div>
         <div className="px-4">{renderMenuItems()}</div>
-      </div>
+      </aside>
     </>
   );
 };

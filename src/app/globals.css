@@ -1,7 +1,11 @@
 @import "tailwindcss";
 @import "@heroui/styles";
-@import "tailwindcss";
-@import "@heroui/styles";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
 
 /* Swiper Custom Styles */
 .swiper-pagination-bullet-active {
