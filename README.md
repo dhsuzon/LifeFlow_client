@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# LifeFlow Blood Donation Platform
 
-## Getting Started
+LifeFlow connects blood recipients, donors, volunteers, and administrators. Users can publish blood requests, search active donors, volunteer to donate, manage request lifecycles, and contribute funds through Stripe.
 
-First, run the development server:
+## Live URL
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Add the deployed production URL here before submission.
+
+## Key features
+
+- Email/password authentication with Better Auth and MongoDB
+- JWT issuing/JWKS support for protected API integrations
+- Donor, volunteer, and admin role-based dashboards
+- Responsive dashboard sidebar with private profile management
+- Donation request creation, editing, deletion, filtering, and pagination
+- Atomic `pending → inprogress` donation confirmation with donor information
+- Donor-controlled `inprogress → done/canceled` status transitions
+- Admin user blocking/unblocking and role management
+- Volunteer status-only donation-request management
+- Public pending-request listing and private request details
+- Active donor search by blood group, district, and upazila
+- Stripe Checkout funding with signed webhook recording
+- ImgBB avatar uploads and responsive dark-mode UI
+
+## Main routes
+
+- `/` — landing page
+- `/auth/register`, `/auth/login` — authentication
+- `/donation-requests` — public pending requests
+- `/donation-requests/[id]` — private request details and donation confirmation
+- `/search` — donor search
+- `/funding` — private funding history and Stripe checkout
+- `/dashboard` — role-aware dashboard home
+- `/dashboard/profile` — profile management
+- `/dashboard/create-donation-request` — create a request
+- `/dashboard/my-donation-requests` — donor-owned requests
+- `/dashboard/all-users` — admin user management
+- `/dashboard/all-blood-donation-request` — admin/volunteer request management
+
+## Local setup
+
+1. Install dependencies with `npm install`.
+2. Copy `.env.example` to `.env` and provide real credentials.
+3. Start development with `npm run dev`.
+4. Open `http://localhost:3000`.
+
+## Stripe webhook
+
+Configure Stripe to send `checkout.session.completed` events to:
+
+```text
+https://YOUR_DOMAIN/api/stripe/webhook
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For local testing, forward Stripe CLI events to `http://localhost:3000/api/stripe/webhook` and set the generated signing secret as `STRIPE_WEBHOOK_SECRET`.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` — development server
+- `npm run lint` — ESLint validation
+- `npm run build` — production build
+- `npm start` — production server
 
-## Learn More
+## Packages
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 16, React 19, Better Auth, MongoDB, HeroUI, Tailwind CSS, Stripe, React Toastify, React Icons, and Swiper.
