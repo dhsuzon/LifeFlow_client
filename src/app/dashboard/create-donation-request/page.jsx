@@ -1,262 +1,299 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import {
-  Form,
   Button,
-  TextField,
-  Label,
-  Input,
-  Select,
-  ListBox,
   DateField,
-  TimeField,
+  Form,
+  Input,
+  Label,
+  ListBox,
+  Select,
   TextArea,
+  TextField,
+  TimeField,
 } from "@heroui/react";
 
+import { createDonationRequest } from "@/lib/actions/donation-request";
 import { useSession } from "@/lib/auth-client";
 import { districts, upazilas } from "@/data/bdgeoData";
 import { bloodGroups } from "@/data/bloodGroups";
 
-const CreateDonationRequest = () => {
-  const { data: session } = useSession();
-  const [mounted, setMounted] = useState(false);
+const initialFormData = {
+  recipientName: "",
+  recipientDistrict: "",
+  recipientUpazila: "",
+  hospitalName: "",
+  fullAddress: "",
+  bloodGroup: "",
+  donationDate: null,
+  donationTime: null,
+  requestMessage: "",
+};
 
-  const router = useRouter();
-
-  const [formData, setFormData] = useState({
-    recipientName: "",
-    recipientDistrict: "",
-    recipientUpazila: "",
-    hospitalName: "",
-    fullAddress: "",
-    bloodGroup: "",
-    donationDate: null,
-    donationTime: null,
-    requestMessage: "",
-  });
+const CreateDonationRequestPage = () => {
+  const { data: session, isPending: isSessionPending } = useSession();
+  const [formData, setFormData] = useState(initialFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isActiveUser = session?.user?.status === "active";
 
   const filteredUpazilas = useMemo(() => {
-    const districtObj = districts.find(
-      (d) => d.name === formData.recipientDistrict,
+    const district = districts.find(
+      (item) => item.name === formData.recipientDistrict,
     );
-    if (!districtObj) return [];
-    return upazilas.filter((u) => u.district_id === districtObj.id);
+
+    if (!district) return [];
+
+    return upazilas.filter(
+      (item) => String(item.district_id) === String(district.id),
+    );
   }, [formData.recipientDistrict]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (session?.user?.status === "blocked") {
-      toast.error("Access Denied: You are blocked.");
-      return;
-    }
-    toast.success("Donation request created successfully!");
+  const updateField = (field, value) => {
+    setFormData((current) => ({ ...current, [field]: value }));
   };
 
+  const handleReset = () => setFormData(initialFormData);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await createDonationRequest({
+        ...formData,
+        donationDate: formData.donationDate?.toString() || "",
+        donationTime: formData.donationTime?.toString() || "",
+      });
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success("Donation request created successfully!");
+      handleReset();
+    } catch {
+      toast.error("Could not create the donation request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSessionPending) {
+    return <div className="p-12 text-center">Loading request form...</div>;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-950">
-      <div className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-2xl p-8 md:p-12">
-        <header className="mb-10 text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+    <div className="mx-auto w-full max-w-5xl">
+      <Form
+        onSubmit={handleSubmit}
+        onReset={handleReset}
+        className="block rounded-3xl border border-gray-200 bg-white p-5 shadow-xl dark:border-gray-800 dark:bg-gray-900 sm:p-8 lg:p-10"
+      >
+        <header className="mb-8">
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white sm:text-3xl">
             Create Donation Request
-          </h2>
+          </h1>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Provide the recipient and donation details below.
+          </p>
         </header>
 
-        <Form onSubmit={handleSubmit}>
-          {/* Main Horizontal Split: Left and Right Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-            {/* LEFT COLUMN */}
-            <div className="space-y-6">
-              <TextField isReadOnly value={session?.user?.name || ""}>
-                <Label className="font-semibold text-gray-700">
-                  requester name
-                </Label>
-                <Input className="bg-gray-100" />
-              </TextField>
-
-              <TextField isReadOnly value={session?.user?.email || ""}>
-                <Label className="font-semibold text-gray-700">
-                  requester email
-                </Label>
-                <Input className="bg-gray-100" />
-              </TextField>
-
-              <TextField
-                isRequired
-                onChange={(val) =>
-                  setFormData({ ...formData, recipientName: val })
-                }
-              >
-                <Label className="font-semibold text-gray-700">
-                  recipient name
-                </Label>
-                <Input placeholder="Enter recipient name" />
-              </TextField>
-
-              <Select
-                onSelectionChange={(key) =>
-                  setFormData({
-                    ...formData,
-                    recipientDistrict: key,
-                    recipientUpazila: "",
-                  })
-                }
-              >
-                <Label className="font-semibold text-gray-700">
-                  recipient district
-                </Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox items={districts}>
-                    {(d) => (
-                      <ListBox.Item key={d.name} id={d.name}>
-                        {d.name}
-                      </ListBox.Item>
-                    )}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-
-              <Select
-                isDisabled={!formData.recipientDistrict}
-                onSelectionChange={(key) =>
-                  setFormData({ ...formData, recipientUpazila: key })
-                }
-              >
-                <Label className="font-semibold text-gray-700">
-                  recipient upazila
-                </Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox items={filteredUpazilas}>
-                    {(u) => (
-                      <ListBox.Item key={u.name} id={u.name}>
-                        {u.name}
-                      </ListBox.Item>
-                    )}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            </div>
-
-            {/* RIGHT COLUMN */}
-            <div className="space-y-6">
-              <TextField
-                isRequired
-                onChange={(val) =>
-                  setFormData({ ...formData, hospitalName: val })
-                }
-              >
-                <Label className="font-semibold text-gray-700">
-                  hospital name
-                </Label>
-                <Input placeholder="Dhaka Medical College Hospital" />
-              </TextField>
-
-              <TextField
-                isRequired
-                onChange={(val) =>
-                  setFormData({ ...formData, fullAddress: val })
-                }
-              >
-                <Label className="font-semibold text-gray-700">
-                  full address line
-                </Label>
-                <Input placeholder="Zahir Raihan Rd, Dhaka" />
-              </TextField>
-
-              <Select
-                onSelectionChange={(key) =>
-                  setFormData({ ...formData, bloodGroup: key })
-                }
-              >
-                <Label className="font-semibold text-gray-700">
-                  blood group
-                </Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox items={bloodGroups}>
-                    {(bg) => (
-                      <ListBox.Item key={bg.id} id={bg.id}>
-                        {bg.name}
-                      </ListBox.Item>
-                    )}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-
-              <DateField
-                onChange={(date) =>
-                  setFormData({ ...formData, donationDate: date })
-                }
-              >
-                <Label className="font-semibold text-gray-700">
-                  donation date
-                </Label>
-                <DateField.Group>
-                  <DateField.Input>
-                    {(s) => <DateField.Segment segment={s} />}
-                  </DateField.Input>
-                </DateField.Group>
-              </DateField>
-
-              <TimeField
-                onChange={(time) =>
-                  setFormData({ ...formData, donationTime: time })
-                }
-              >
-                <Label className="font-semibold text-gray-700">
-                  donation time
-                </Label>
-                <TimeField.Group>
-                  <TimeField.Input>
-                    {(s) => <TimeField.Segment segment={s} />}
-                  </TimeField.Input>
-                </TimeField.Group>
-              </TimeField>
-            </div>
+        {!isActiveUser && (
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+          >
+            Your account is not active. Only active users can create donation
+            requests.
           </div>
+        )}
 
-          {/* Full Width Message Area */}
-          <div className="mt-6">
-            <Label className="font-semibold text-gray-700 mb-2 block">
-              request message
-            </Label>
-            <TextArea
-              className="h-32 w-full"
-              placeholder="Explain the urgency and details here..."
-              onChange={(e) =>
-                setFormData({ ...formData, requestMessage: e.target.value })
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-10">
+          <TextField isReadOnly>
+            <Label>Requester Name</Label>
+            <Input
+              readOnly
+              value={session?.user?.name || ""}
+              className="border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            />
+          </TextField>
+
+          <TextField isReadOnly>
+            <Label>Requester Email</Label>
+            <Input
+              readOnly
+              value={session?.user?.email || ""}
+              className="border-gray-300 bg-gray-100 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            />
+          </TextField>
+
+          <TextField isRequired>
+            <Label>Recipient Name</Label>
+            <Input
+              required
+              value={formData.recipientName}
+              placeholder="Enter recipient name"
+              onChange={(event) =>
+                updateField("recipientName", event.target.value)
               }
             />
-          </div>
+          </TextField>
 
-          <div className="flex justify-end gap-4 pt-8">
-            <Button type="reset" variant="flat" className="px-8">
-              Reset
-            </Button>
-            <Button
-              type="submit"
-              className="bg-danger text-white px-10 font-bold"
-            >
-              request button
-            </Button>
-          </div>
-        </Form>
-      </div>
+          <Select
+            isRequired
+            selectedKey={formData.bloodGroup}
+            onSelectionChange={(key) => updateField("bloodGroup", key)}
+          >
+            <Label>Blood Group</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator>▼</Select.Indicator>
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox items={bloodGroups}>
+                {(group) => (
+                  <ListBox.Item key={group.name} id={group.name}>
+                    {group.name}
+                  </ListBox.Item>
+                )}
+              </ListBox>
+            </Select.Popover>
+          </Select>
+
+          <Select
+            isRequired
+            selectedKey={formData.recipientDistrict}
+            onSelectionChange={(key) =>
+              setFormData((current) => ({
+                ...current,
+                recipientDistrict: key,
+                recipientUpazila: "",
+              }))
+            }
+          >
+            <Label>Recipient District</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator>▼</Select.Indicator>
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox items={districts}>
+                {(district) => (
+                  <ListBox.Item key={district.name} id={district.name}>
+                    {district.name}
+                  </ListBox.Item>
+                )}
+              </ListBox>
+            </Select.Popover>
+          </Select>
+
+          <Select
+            isRequired
+            isDisabled={!formData.recipientDistrict}
+            selectedKey={formData.recipientUpazila}
+            onSelectionChange={(key) => updateField("recipientUpazila", key)}
+          >
+            <Label>Recipient Upazila</Label>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator>▼</Select.Indicator>
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox items={filteredUpazilas}>
+                {(upazila) => (
+                  <ListBox.Item key={upazila.name} id={upazila.name}>
+                    {upazila.name}
+                  </ListBox.Item>
+                )}
+              </ListBox>
+            </Select.Popover>
+          </Select>
+
+          <TextField isRequired>
+            <Label>Hospital Name</Label>
+            <Input
+              required
+              value={formData.hospitalName}
+              placeholder="Dhaka Medical College Hospital"
+              onChange={(event) =>
+                updateField("hospitalName", event.target.value)
+              }
+            />
+          </TextField>
+
+          <TextField isRequired>
+            <Label>Full Address Line</Label>
+            <Input
+              required
+              value={formData.fullAddress}
+              placeholder="Zahir Raihan Rd, Dhaka"
+              onChange={(event) =>
+                updateField("fullAddress", event.target.value)
+              }
+            />
+          </TextField>
+
+          <DateField
+            isRequired
+            value={formData.donationDate}
+            onChange={(value) => updateField("donationDate", value)}
+          >
+            <Label>Donation Date</Label>
+            <DateField.Group>
+              <DateField.Input>
+                {(segment) => <DateField.Segment segment={segment} />}
+              </DateField.Input>
+            </DateField.Group>
+          </DateField>
+
+          <TimeField
+            isRequired
+            value={formData.donationTime}
+            onChange={(value) => updateField("donationTime", value)}
+          >
+            <Label>Donation Time</Label>
+            <TimeField.Group>
+              <TimeField.Input>
+                {(segment) => <TimeField.Segment segment={segment} />}
+              </TimeField.Input>
+            </TimeField.Group>
+          </TimeField>
+        </div>
+
+        <div className="mt-6">
+          <Label className="mb-2 block">Request Message</Label>
+          <TextArea
+            required
+            value={formData.requestMessage}
+            className="min-h-32 w-full"
+            placeholder="Explain why blood is needed and include important details."
+            onChange={(event) =>
+              updateField("requestMessage", event.target.value)
+            }
+          />
+        </div>
+
+        <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button type="reset" variant="flat" isDisabled={isSubmitting}>
+            Reset
+          </Button>
+          <Button
+            type="submit"
+            isLoading={isSubmitting}
+            isDisabled={isSubmitting || !isActiveUser}
+            className="bg-danger font-bold text-white"
+          >
+            Request Blood
+          </Button>
+        </div>
+      </Form>
     </div>
   );
 };
 
-export default CreateDonationRequest;
+export default CreateDonationRequestPage;
