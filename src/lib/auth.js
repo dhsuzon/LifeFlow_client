@@ -1,12 +1,10 @@
 import { betterAuth } from "better-auth";
-import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-
-const uri = process.env.MONGO_DB_URL;
-const client = new MongoClient(uri);
-const db = client.db("blood_donation_db");
+import { jwt } from "better-auth/plugins";
+import { client, db } from "@/lib/db";
 
 export const auth = betterAuth({
+  plugins: [jwt()],
   emailAndPassword: {
     enabled: true,
     autoSignIn: false,

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import {
   Form,
   Button,
@@ -15,7 +15,14 @@ import { toast } from "react-toastify";
 import Link from "next/link";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
-const LoginPage = () => {
+const LoginPage = ({ searchParams }) => {
+  const { callbackURL } = use(searchParams);
+  const destination =
+    typeof callbackURL === "string" &&
+    callbackURL.startsWith("/") &&
+    !callbackURL.startsWith("//")
+      ? callbackURL
+      : "/";
   const Router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +62,7 @@ const LoginPage = () => {
         setErrors({ email: "Invalid email or password." });
       } else {
         toast.success("Login Successful!", {
-          onClose: () => Router.push("/"),
+          onClose: () => Router.push(destination),
         });
       }
     } catch (err) {

@@ -188,8 +188,8 @@ const RegisterPage = () => {
             <Select
               placeholder="Select district"
               onSelectionChange={(key) => {
-                const district = districts.find((d) => d.id === key);
-                setSelectedDistrictId(key);
+                const district = districts.find((d) => d.name === key);
+                setSelectedDistrictId(district?.id || null);
                 setSelectedDistrictName(district?.name || "");
                 setSelectedUpazilaId(null);
                 setSelectedUpazilaName("");
@@ -217,8 +217,8 @@ const RegisterPage = () => {
             <Select
               placeholder="Select upazila"
               onSelectionChange={(key) => {
-                const upazila = filteredUpazilas.find((u) => u.id === key);
-                setSelectedUpazilaId(key);
+                const upazila = filteredUpazilas.find((u) => u.name === key);
+                setSelectedUpazilaId(upazila?.id || null);
                 setSelectedUpazilaName(upazila?.name || "");
               }}
               isDisabled={!selectedDistrictId}
