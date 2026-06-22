@@ -22,6 +22,7 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [avatar, setAvatar] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -33,7 +34,9 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    if (session?.user) {
+    if (!session?.user) return;
+
+    const timer = window.setTimeout(() => {
       setFormData({
         name: session.user.name || "",
         email: session.user.email || "",
@@ -42,7 +45,9 @@ const ProfilePage = () => {
         upazila: session.user.upazila || "",
       });
       setAvatar(session.user.image || null);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [session]);
 
   const filteredUpazilas = useMemo(() => {
@@ -53,57 +58,107 @@ const ProfilePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent an accidental submit while the form is still in view mode.
+    if (!isEditing) return;
+
     setLoading(true);
-    const { error } = await authClient.user.update({
-      ...formData,
-      image: avatar,
-    });
-    if (error) toast.error(error.message);
-    else {
+
+    try {
+      let image = avatar;
+
+      if (avatarFile) {
+        const uploadData = new FormData();
+        uploadData.append("image", avatarFile);
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_IMGBB_URL}?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
+          { method: "POST", body: uploadData },
+        );
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error("Profile image upload failed");
+        }
+
+        image = result.data.url;
+      }
+
+      const { error } = await authClient.updateUser({
+        name: formData.name,
+        bloodGroup: formData.bloodGroup,
+        district: formData.district,
+        upazila: formData.upazila,
+        image,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      setAvatar(image);
+      setAvatarFile(null);
       toast.success("Profile Updated!");
       setIsEditing(false);
-      refetch();
+      await refetch();
+    } catch (error) {
+      toast.error(error.message || "Profile update failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (isPending)
     return <div className="text-center p-12">Loading Profile...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
-        {/* Header Section */}
-        <div className="flex justify-between items-center p-8 border-b border-gray-100 dark:border-gray-800">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+    <div className="mx-auto max-w-6xl">
+      <Form
+        id="profile-form"
+        onSubmit={handleSubmit}
+        className="block overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900"
+      >
+        {/* The form action is always at the top of the form. */}
+        <div className="flex items-center justify-between gap-4 border-b border-gray-100 p-4 dark:border-gray-800 sm:p-8">
+          <h1 className="text-xl font-bold text-gray-800 dark:text-white sm:text-2xl">
             Profile Settings
           </h1>
 
           {/* Button style updated to square (radius="none") and colors applied */}
-          <Button
-            type={isEditing ? "submit" : "button"}
-            form="profile-form"
-            onClick={() => !isEditing && setIsEditing(true)}
-            className={`font-bold text-white rounded-none ${
-              isEditing ? "bg-green-600" : "bg-danger"
-            }`}
-          >
-            {isEditing ? (
+          {isEditing ? (
+            <Button
+              key="save-profile"
+              type="submit"
+              isLoading={loading}
+              isDisabled={loading}
+              className="rounded-none bg-green-600 font-bold text-white"
+            >
               <>
                 <FiSave /> Save
               </>
-            ) : (
+            </Button>
+          ) : (
+            <Button
+              key="edit-profile"
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                setIsEditing(true);
+              }}
+              className="rounded-none bg-danger font-bold text-white"
+            >
               <>
                 <FiEdit2 /> Edit
               </>
-            )}
-          </Button>
+            </Button>
+          )}
         </div>
 
         {/* Horizontal Two-Part Layout */}
-        <div className="flex flex-col md:flex-row p-8 gap-12">
+        <div className="flex flex-col gap-6 p-4 sm:p-8 md:flex-row md:gap-12">
           {/* LEFT: Avatar */}
-          <div className="md:w-1/3 flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-gray-800/30 rounded-2xl">
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-gray-50 p-5 dark:bg-gray-800/30 sm:p-8 md:w-1/3">
             <div
               className="relative w-48 h-48 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-200 flex items-center justify-center cursor-pointer"
               onClick={() => isEditing && fileInputRef.current.click()}
@@ -130,9 +185,13 @@ const ProfilePage = () => {
               type="file"
               ref={fileInputRef}
               className="hidden"
-              onChange={(e) =>
-                setAvatar(URL.createObjectURL(e.target.files[0]))
-              }
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setAvatarFile(file);
+                setAvatar(URL.createObjectURL(file));
+              }}
             />
             <p className="mt-6 font-semibold text-lg">
               {formData.name || "User"}
@@ -141,10 +200,11 @@ const ProfilePage = () => {
 
           {/* RIGHT: Form Fields */}
           <div className="md:w-2/3">
-            <Form id="profile-form" onSubmit={handleSubmit} className="space-y-6 ">
+            <div className="space-y-6">
               <TextField name="name" isReadOnly={!isEditing}>
                 <Label>Full Name</Label>
                 <Input
+                  readOnly={!isEditing}
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -154,7 +214,7 @@ const ProfilePage = () => {
 
               <TextField name="email" isReadOnly={true}>
                 <Label>Email</Label>
-                <Input value={formData.email} />
+                <Input readOnly value={formData.email} />
               </TextField>
 
               <Select
@@ -180,7 +240,7 @@ const ProfilePage = () => {
                 </Select.Popover>
               </Select>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <Select
                   isDisabled={!isEditing}
                   selectedKey={formData.district}
@@ -227,10 +287,10 @@ const ProfilePage = () => {
                   </Select.Popover>
                 </Select>
               </div>
-            </Form>
+            </div>
           </div>
         </div>
-      </div>
+      </Form>
     </div>
   );
 };
