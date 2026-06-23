@@ -203,7 +203,7 @@ const RegisterPage = () => {
               <Select.Popover>
                 <ListBox items={districts}>
                   {(i) => (
-                    <ListBox.Item key={i.name} textValue={i.name}>
+                    <ListBox.Item key={i.name} id={i.name} textValue={i.name}>
                       {i.name}
                     </ListBox.Item>
                   )}
@@ -231,7 +231,7 @@ const RegisterPage = () => {
               <Select.Popover>
                 <ListBox items={filteredUpazilas}>
                   {(i) => (
-                    <ListBox.Item key={i.name} textValue={i.name}>
+                    <ListBox.Item key={i.name} id={i.name} textValue={i.name}>
                       {i.name}
                     </ListBox.Item>
                   )}
