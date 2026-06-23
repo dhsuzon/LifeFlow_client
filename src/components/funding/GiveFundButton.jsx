@@ -1,3 +1,60 @@
 "use client";
-import { useState } from "react"; import { toast } from "react-toastify";
-export default function GiveFundButton(){const[open,setOpen]=useState(false);const[amount,setAmount]=useState(10);const[busy,setBusy]=useState(false);const pay=async()=>{setBusy(true);try{const response=await fetch("/api/stripe/checkout",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({amount})});const text=await response.text();let data={};try{data=text?JSON.parse(text):{}}catch{}if(!response.ok)throw new Error(data.error||`Checkout failed (${response.status})`);if(!data.url)throw new Error("Stripe did not return a checkout URL.");window.location.assign(data.url)}catch(e){toast.error(e.message);setBusy(false)}};return <><button onClick={()=>setOpen(true)} className="rounded-lg bg-danger px-5 py-2.5 font-bold text-white">Give Fund</button>{open&&<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"><div className="w-full max-w-md rounded-2xl bg-white p-6 dark:bg-gray-900"><h2 className="text-xl font-bold dark:text-white">Support LifeFlow</h2><label className="mt-4 block text-sm font-semibold dark:text-gray-200">Amount (USD)<input type="number" min="1" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"/></label><div className="mt-6 flex justify-end gap-3"><button onClick={()=>setOpen(false)} className="rounded-lg border px-4 py-2 dark:border-gray-700 dark:text-white">Cancel</button><button disabled={busy} onClick={pay} className="rounded-lg bg-danger px-4 py-2 font-bold text-white disabled:opacity-50">{busy?"Opening Stripe...":"Continue to Payment"}</button></div></div></div>}</>}
+import { useState } from "react";
+import { toast } from "react-toastify";
+import { apiRequest } from "@/lib/api-client";
+
+export default function GiveFundButton() {
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState(10);
+  const [busy, setBusy] = useState(false);
+
+  const pay = async () => {
+    setBusy(true);
+    try {
+      const { response, data } = await apiRequest("/api/stripe/checkout", {
+        method: "POST",
+        body: JSON.stringify({ amount }),
+      });
+      if (!response.ok) throw new Error(data.error || `Checkout failed (${response.status})`);
+      if (!data.url) throw new Error("Stripe did not return a checkout URL.");
+      window.location.assign(data.url);
+    } catch (e) {
+      toast.error(e.message);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="rounded-lg bg-danger px-5 py-2.5 font-bold text-white">
+        Give Fund
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 dark:bg-gray-900">
+            <h2 className="text-xl font-bold dark:text-white">Support LifeFlow</h2>
+            <label className="mt-4 block text-sm font-semibold dark:text-gray-200">
+              Amount (USD)
+              <input
+                type="number"
+                min="1"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="mt-1 w-full rounded-lg border px-3 py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </label>
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setOpen(false)} className="rounded-lg border px-4 py-2 dark:border-gray-700 dark:text-white">
+                Cancel
+              </button>
+              <button disabled={busy} onClick={pay} className="rounded-lg bg-danger px-4 py-2 font-bold text-white disabled:opacity-50">
+                {busy ? "Opening Stripe..." : "Continue to Payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

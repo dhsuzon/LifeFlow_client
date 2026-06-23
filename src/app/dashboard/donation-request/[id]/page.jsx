@@ -1,19 +1,40 @@
-import { notFound } from "next/navigation";
-import { getMyDonationRequest } from "@/lib/actions/donation-request";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { apiRequest } from "@/lib/api-client";
 
 const labels = {
-  requesterName: "Requester Name", requesterEmail: "Requester Email",
-  recipientName: "Recipient Name", recipientDistrict: "District",
-  recipientUpazila: "Upazila", hospitalName: "Hospital",
-  fullAddress: "Full Address", bloodGroup: "Blood Group",
-  donationDate: "Donation Date", donationTime: "Donation Time",
-  donationStatus: "Status", donorName: "Donor Name", donorEmail: "Donor Email",
+  requesterName: "Requester Name",
+  requesterEmail: "Requester Email",
+  recipientName: "Recipient Name",
+  recipientDistrict: "District",
+  recipientUpazila: "Upazila",
+  hospitalName: "Hospital",
+  fullAddress: "Full Address",
+  bloodGroup: "Blood Group",
+  donationDate: "Donation Date",
+  donationTime: "Donation Time",
+  donationStatus: "Status",
+  donorName: "Donor Name",
+  donorEmail: "Donor Email",
 };
 
-export default async function DonationRequestDetailsPage({ params }) {
-  const { id } = await params;
-  const request = await getMyDonationRequest(id);
-  if (!request) notFound();
+export default function DonationRequestDetailsPage() {
+  const { id } = useParams();
+  const [request, setRequest] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiRequest(`/api/donation-requests/${id}`).then(({ response, data }) => {
+      setRequest(response.ok ? data.request : null);
+      setLoading(false);
+    });
+  }, [id]);
+
+  if (loading) return <div className="p-12 text-center text-gray-500 dark:text-gray-300">Loading details...</div>;
+  if (!request) return <div className="p-12 text-center text-gray-500 dark:text-gray-300">Request not found.</div>;
+
   return (
     <article className="rounded-2xl border bg-white p-5 shadow dark:border-gray-800 dark:bg-gray-900 sm:p-8">
       <h1 className="text-2xl font-extrabold dark:text-white">Donation Request Details</h1>

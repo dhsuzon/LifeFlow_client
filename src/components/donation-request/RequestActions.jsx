@@ -4,31 +4,40 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import {
-  deleteMyDonationRequest,
-  updateMyDonationStatus,
-} from "@/lib/actions/donation-request";
+import { apiRequest } from "@/lib/api-client";
 
-const RequestActions = ({ requestId, status }) => {
+const RequestActions = ({ requestId, status, onChanged }) => {
   const router = useRouter();
   const [isBusy, setIsBusy] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const afterChange = () => {
+    if (onChanged) onChanged();
+    else router.refresh();
+  };
+
   const changeStatus = async (nextStatus) => {
     setIsBusy(true);
-    const result = await updateMyDonationStatus(requestId, nextStatus);
+    const { response, data } = await apiRequest(`/api/donation-requests/${requestId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: nextStatus }),
+    });
     setIsBusy(false);
-    result.success ? toast.success(`Request marked ${nextStatus}.`) : toast.error(result.error);
-    if (result.success) router.refresh();
+    if (!response.ok) return toast.error(data.error || "Unable to update request.");
+    toast.success(`Request marked ${nextStatus}.`);
+    afterChange();
   };
 
   const removeRequest = async () => {
     setIsBusy(true);
-    const result = await deleteMyDonationRequest(requestId);
+    const { response, data } = await apiRequest(`/api/donation-requests/${requestId}`, {
+      method: "DELETE",
+    });
     setIsBusy(false);
     setShowDeleteModal(false);
-    result.success ? toast.success("Donation request deleted.") : toast.error(result.error);
-    if (result.success) router.refresh();
+    if (!response.ok) return toast.error(data.error || "Unable to delete request.");
+    toast.success("Donation request deleted.");
+    afterChange();
   };
 
   return (

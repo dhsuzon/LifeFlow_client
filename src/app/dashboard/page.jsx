@@ -1,63 +1,92 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getLoggedSessionUser } from "@/lib/actions/session";
-import { getMyDonationRequests } from "@/lib/actions/donation-request";
-import RequestActions from "@/components/donation-request/RequestActions";
-import { getDashboardStats } from "@/lib/actions/platform";
 import { FaUsers, FaHandHoldingUsd, FaTint } from "react-icons/fa";
+import { useSession } from "@/lib/auth-client";
+import RequestActions from "@/components/donation-request/RequestActions";
+import { apiRequest } from "@/lib/api-client";
 
 const statusLabels = { pending: "Pending", inprogress: "In Progress", done: "Done", canceled: "Canceled" };
 
-const DashboardHomePage = async () => {
-  const user = await getLoggedSessionUser();
+function AdminHome({ user }) {
+  const [stats, setStats] = useState(null);
 
-  if (!user) redirect("/auth/login");
+  useEffect(() => {
+    apiRequest("/api/admin/stats").then(({ response, data }) => {
+      if (response.ok) setStats(data);
+    });
+  }, []);
 
-  if (["admin", "volunteer"].includes(user.role)) {
-    const stats = await getDashboardStats();
-    const cards = [
-      { title: "Total Donors", value: stats?.totalUsers || 0, icon: FaUsers },
-      { title: "Total Funding", value: `$${(stats?.totalFunding || 0).toFixed(2)}`, icon: FaHandHoldingUsd },
-      { title: "Donation Requests", value: stats?.totalRequests || 0, icon: FaTint },
-    ];
-    return (
-      <div className="mx-auto w-full max-w-7xl">
-        <section className="rounded-3xl bg-gradient-to-r from-red-600 to-rose-500 p-6 text-white shadow-lg sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-red-100">{user.role} Dashboard</p>
-          <h1 className="mt-2 text-2xl font-extrabold sm:text-4xl">Welcome, {user.name}!</h1>
-        </section>
-        <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {cards.map(({title,value,icon:Icon})=><article key={title} className="rounded-2xl border bg-white p-6 shadow dark:border-gray-800 dark:bg-gray-900"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-gray-500">{title}</p><p className="mt-2 text-3xl font-extrabold dark:text-white">{value}</p></div><span className="rounded-2xl bg-red-100 p-4 text-2xl text-danger dark:bg-red-950"><Icon/></span></div></article>)}
-        </section>
-        <section className="mt-8 rounded-2xl border bg-white p-6 shadow dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-xl font-extrabold dark:text-white">Request Status Overview</h2>
-          <div className="mt-5 space-y-4">
-            {["pending", "inprogress", "done", "canceled"].map((status) => {
-              const count = stats?.statusCounts?.[status] || 0;
-              const width = stats?.totalRequests ? Math.round((count / stats.totalRequests) * 100) : 0;
-              return <div key={status}><div className="mb-1 flex justify-between text-sm capitalize dark:text-gray-200"><span>{status}</span><span>{count}</span></div><div className="h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800"><div className="h-full rounded-full bg-danger" style={{width:`${width}%`}} /></div></div>;
-            })}
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  const result = await getMyDonationRequests({ page: 1, pageSize: 3 });
-  const recentRequests = result.success ? result.requests : [];
+  const cards = [
+    { title: "Total Donors", value: stats?.totalUsers || 0, icon: FaUsers },
+    { title: "Total Funding", value: `$${(stats?.totalFunding || 0).toFixed(2)}`, icon: FaHandHoldingUsd },
+    { title: "Donation Requests", value: stats?.totalRequests || 0, icon: FaTint },
+  ];
 
   return (
     <div className="mx-auto w-full max-w-7xl">
       <section className="rounded-3xl bg-gradient-to-r from-red-600 to-rose-500 p-6 text-white shadow-lg sm:p-8">
-        <p className="text-sm font-semibold uppercase tracking-wider text-red-100">
-          Donor Dashboard
-        </p>
-        <h1 className="mt-2 text-2xl font-extrabold sm:text-4xl">
-          Welcome, {user.name}!
-        </h1>
+        <p className="text-sm font-semibold uppercase tracking-wider text-red-100">{user.role} Dashboard</p>
+        <h1 className="mt-2 text-2xl font-extrabold sm:text-4xl">Welcome, {user.name}!</h1>
+      </section>
+      <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {cards.map(({ title, value, icon: Icon }) => (
+          <article key={title} className="rounded-2xl border bg-white p-6 shadow dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-500">{title}</p>
+                <p className="mt-2 text-3xl font-extrabold dark:text-white">{value}</p>
+              </div>
+              <span className="rounded-2xl bg-red-100 p-4 text-2xl text-danger dark:bg-red-950"><Icon /></span>
+            </div>
+          </article>
+        ))}
+      </section>
+      <section className="mt-8 rounded-2xl border bg-white p-6 shadow dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="text-xl font-extrabold dark:text-white">Request Status Overview</h2>
+        <div className="mt-5 space-y-4">
+          {["pending", "inprogress", "done", "canceled"].map((status) => {
+            const count = stats?.statusCounts?.[status] || 0;
+            const width = stats?.totalRequests ? Math.round((count / stats.totalRequests) * 100) : 0;
+            return (
+              <div key={status}>
+                <div className="mb-1 flex justify-between text-sm capitalize dark:text-gray-200">
+                  <span>{status}</span>
+                  <span>{count}</span>
+                </div>
+                <div className="h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
+                  <div className="h-full rounded-full bg-danger" style={{ width: `${width}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DonorHome({ user }) {
+  const [recentRequests, setRecentRequests] = useState([]);
+
+  const load = () => {
+    apiRequest("/api/donation-requests/me?pageSize=3").then(({ response, data }) => {
+      if (response.ok) setRecentRequests(data.requests || []);
+    });
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  return (
+    <div className="mx-auto w-full max-w-7xl">
+      <section className="rounded-3xl bg-gradient-to-r from-red-600 to-rose-500 p-6 text-white shadow-lg sm:p-8">
+        <p className="text-sm font-semibold uppercase tracking-wider text-red-100">Donor Dashboard</p>
+        <h1 className="mt-2 text-2xl font-extrabold sm:text-4xl">Welcome, {user.name}!</h1>
         <p className="mt-2 max-w-2xl text-sm text-red-100 sm:text-base">
-          Manage your blood donation requests and help connect recipients with
-          donors.
+          Manage your blood donation requests and help connect recipients with donors.
         </p>
       </section>
 
@@ -95,18 +124,12 @@ const DashboardHomePage = async () => {
                       key={request.id}
                       className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800/60"
                     >
-                      <td className="px-5 py-4 font-semibold">
-                        {request.recipientName}
-                      </td>
+                      <td className="px-5 py-4 font-semibold">{request.recipientName}</td>
                       <td className="px-5 py-4">
                         {request.recipientDistrict}, {request.recipientUpazila}
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        {request.donationDate}
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        {request.donationTime}
-                      </td>
+                      <td className="whitespace-nowrap px-5 py-4">{request.donationDate}</td>
+                      <td className="whitespace-nowrap px-5 py-4">{request.donationTime}</td>
                       <td className="px-5 py-4">
                         <span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-extrabold text-red-700 dark:bg-red-950 dark:text-red-300">
                           {request.bloodGroup}
@@ -117,11 +140,16 @@ const DashboardHomePage = async () => {
                       </td>
                       <td className="px-5 py-4">
                         {request.donorName || request.donorEmail ? (
-                          <div><p className="font-semibold">{request.donorName || "Donor"}</p><p className="text-xs text-gray-500">{request.donorEmail}</p></div>
-                        ) : <span className="text-gray-400">Not assigned</span>}
+                          <div>
+                            <p className="font-semibold">{request.donorName || "Donor"}</p>
+                            <p className="text-xs text-gray-500">{request.donorEmail}</p>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">Not assigned</span>
+                        )}
                       </td>
                       <td className="px-5 py-4">
-                        <RequestActions requestId={request.id} status={request.donationStatus} />
+                        <RequestActions requestId={request.id} status={request.donationStatus} onChanged={load} />
                       </td>
                     </tr>
                   ))}
@@ -130,7 +158,10 @@ const DashboardHomePage = async () => {
             </div>
           </div>
           <div className="mt-5 text-center">
-            <Link href="/dashboard/my-donation-requests" className="inline-flex rounded-lg bg-danger px-5 py-2.5 text-sm font-bold text-white">
+            <Link
+              href="/dashboard/my-donation-requests"
+              className="inline-flex rounded-lg bg-danger px-5 py-2.5 text-sm font-bold text-white"
+            >
               View My All Requests
             </Link>
           </div>
@@ -138,6 +169,20 @@ const DashboardHomePage = async () => {
       )}
     </div>
   );
+}
+
+const DashboardHomePage = () => {
+  const { data: session, isPending } = useSession();
+
+  if (isPending) {
+    return <div className="p-12 text-center text-gray-500 dark:text-gray-300">Loading dashboard...</div>;
+  }
+
+  const user = session?.user;
+  if (!user) return null;
+
+  if (["admin", "volunteer"].includes(user.role)) return <AdminHome user={user} />;
+  return <DonorHome user={user} />;
 };
 
 export default DashboardHomePage;

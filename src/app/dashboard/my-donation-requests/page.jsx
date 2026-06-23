@@ -1,7 +1,8 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getMyDonationRequests } from "@/lib/actions/donation-request";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
 import RequestActions from "@/components/donation-request/RequestActions";
+import { apiRequest } from "@/lib/api-client";
 
 const statusOptions = [
   { value: "all", label: "All statuses" },
@@ -25,27 +26,38 @@ const statusLabels = {
   canceled: "Canceled",
 };
 
-const pageHref = (page, status) => {
-  const params = new URLSearchParams();
-  if (status !== "all") params.set("status", status);
-  if (page > 1) params.set("page", String(page));
-  const query = params.toString();
-  return query
-    ? `/dashboard/my-donation-requests?${query}`
-    : "/dashboard/my-donation-requests";
-};
+const emptyPagination = { currentPage: 1, totalPages: 1, totalItems: 0 };
 
-const MyDonationRequestsPage = async ({ searchParams }) => {
-  const query = await searchParams;
-  const result = await getMyDonationRequests({
-    status: typeof query.status === "string" ? query.status : "all",
-    page: typeof query.page === "string" ? query.page : 1,
-    pageSize: 5,
-  });
+const MyDonationRequestsPage = () => {
+  const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
+  const [requests, setRequests] = useState([]);
+  const [pagination, setPagination] = useState(emptyPagination);
+  const [loading, setLoading] = useState(true);
 
-  if (!result.success) redirect("/auth/login");
+  const load = useCallback(async () => {
+    setLoading(true);
+    const params = new URLSearchParams({ status, page: String(page), pageSize: "5" });
+    const { response, data } = await apiRequest(`/api/donation-requests/me?${params}`);
+    if (response.ok) {
+      setRequests(data.requests || []);
+      setPagination(data.pagination || emptyPagination);
+    } else {
+      setRequests([]);
+      setPagination(emptyPagination);
+    }
+    setLoading(false);
+  }, [status, page]);
 
-  const { requests, selectedStatus, pagination } = result;
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onFilter = (event) => {
+    event.preventDefault();
+    setPage(1);
+    setStatus(new FormData(event.currentTarget).get("status") || "all");
+  };
 
   return (
     <section className="mx-auto w-full max-w-7xl">
@@ -59,7 +71,7 @@ const MyDonationRequestsPage = async ({ searchParams }) => {
           </p>
         </div>
 
-        <form className="flex w-full items-end gap-2 sm:w-auto">
+        <form onSubmit={onFilter} className="flex w-full items-end gap-2 sm:w-auto">
           <div className="flex-1 sm:min-w-52">
             <label
               htmlFor="status-filter"
@@ -70,7 +82,7 @@ const MyDonationRequestsPage = async ({ searchParams }) => {
             <select
               id="status-filter"
               name="status"
-              defaultValue={selectedStatus}
+              defaultValue={status}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-danger dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             >
               {statusOptions.map((option) => (
@@ -106,47 +118,39 @@ const MyDonationRequestsPage = async ({ searchParams }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {requests.length ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={9} className="px-5 py-14 text-center text-gray-500 dark:text-gray-400">
+                    Loading your requests...
+                  </td>
+                </tr>
+              ) : requests.length ? (
                 requests.map((request) => (
                   <tr
                     key={request.id}
                     className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800/60"
                   >
-                    <td className="px-5 py-4 font-semibold">
-                      {request.recipientName}
-                    </td>
+                    <td className="px-5 py-4 font-semibold">{request.recipientName}</td>
                     <td className="px-5 py-4">
                       {request.recipientUpazila}, {request.recipientDistrict}
                     </td>
-                    <td className="max-w-60 px-5 py-4">
-                      {request.hospitalName}
-                    </td>
-                    <td className="px-5 py-4 font-bold text-danger">
-                      {request.bloodGroup}
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-4">
-                      {request.donationDate}
-                    </td>
-                    <td className="whitespace-nowrap px-5 py-4">
-                      {request.donationTime}
-                    </td>
+                    <td className="max-w-60 px-5 py-4">{request.hospitalName}</td>
+                    <td className="px-5 py-4 font-bold text-danger">{request.bloodGroup}</td>
+                    <td className="whitespace-nowrap px-5 py-4">{request.donationDate}</td>
+                    <td className="whitespace-nowrap px-5 py-4">{request.donationTime}</td>
                     <td className="px-5 py-4">
                       <span
                         className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
-                          statusStyles[request.donationStatus] ||
-                          statusStyles.pending
+                          statusStyles[request.donationStatus] || statusStyles.pending
                         }`}
                       >
-                        {statusLabels[request.donationStatus] ||
-                          request.donationStatus}
+                        {statusLabels[request.donationStatus] || request.donationStatus}
                       </span>
                     </td>
                     <td className="px-5 py-4">
                       {request.donorName || request.donorEmail ? (
                         <div>
-                          <p className="font-semibold">
-                            {request.donorName || "Donor"}
-                          </p>
+                          <p className="font-semibold">{request.donorName || "Donor"}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {request.donorEmail}
                           </p>
@@ -156,16 +160,17 @@ const MyDonationRequestsPage = async ({ searchParams }) => {
                       )}
                     </td>
                     <td className="px-5 py-4">
-                      <RequestActions requestId={request.id} status={request.donationStatus} />
+                      <RequestActions
+                        requestId={request.id}
+                        status={request.donationStatus}
+                        onChanged={load}
+                      />
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan={9}
-                    className="px-5 py-14 text-center text-gray-500 dark:text-gray-400"
-                  >
+                  <td colSpan={9} className="px-5 py-14 text-center text-gray-500 dark:text-gray-400">
                     No donation requests found for this status.
                   </td>
                 </tr>
@@ -183,28 +188,21 @@ const MyDonationRequestsPage = async ({ searchParams }) => {
               Page {pagination.currentPage} of {pagination.totalPages}
             </p>
             <div className="flex flex-wrap gap-2">
-              <Link
-                href={pageHref(
-                  Math.max(pagination.currentPage - 1, 1),
-                  selectedStatus,
-                )}
-                aria-disabled={pagination.currentPage === 1}
-                className={`rounded-lg border px-3 py-2 text-sm font-semibold ${
-                  pagination.currentPage === 1
-                    ? "pointer-events-none border-gray-200 text-gray-400 dark:border-gray-800 dark:text-gray-600"
-                    : "border-gray-300 text-gray-700 hover:border-danger hover:text-danger dark:border-gray-700 dark:text-gray-200"
-                }`}
+              <button
+                onClick={() => setPage((current) => Math.max(current - 1, 1))}
+                disabled={pagination.currentPage === 1}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:border-danger hover:text-danger disabled:pointer-events-none disabled:border-gray-200 disabled:text-gray-400 dark:border-gray-700 dark:text-gray-200 dark:disabled:border-gray-800 dark:disabled:text-gray-600"
               >
                 Previous
-              </Link>
+              </button>
 
               {Array.from({ length: pagination.totalPages }, (_, index) => {
-                const page = index + 1;
-                const isActive = page === pagination.currentPage;
+                const value = index + 1;
+                const isActive = value === pagination.currentPage;
                 return (
-                  <Link
-                    key={page}
-                    href={pageHref(page, selectedStatus)}
+                  <button
+                    key={value}
+                    onClick={() => setPage(value)}
                     aria-current={isActive ? "page" : undefined}
                     className={`rounded-lg border px-3 py-2 text-sm font-semibold ${
                       isActive
@@ -212,30 +210,18 @@ const MyDonationRequestsPage = async ({ searchParams }) => {
                         : "border-gray-300 text-gray-700 hover:border-danger hover:text-danger dark:border-gray-700 dark:text-gray-200"
                     }`}
                   >
-                    {page}
-                  </Link>
+                    {value}
+                  </button>
                 );
               })}
 
-              <Link
-                href={pageHref(
-                  Math.min(
-                    pagination.currentPage + 1,
-                    pagination.totalPages,
-                  ),
-                  selectedStatus,
-                )}
-                aria-disabled={
-                  pagination.currentPage === pagination.totalPages
-                }
-                className={`rounded-lg border px-3 py-2 text-sm font-semibold ${
-                  pagination.currentPage === pagination.totalPages
-                    ? "pointer-events-none border-gray-200 text-gray-400 dark:border-gray-800 dark:text-gray-600"
-                    : "border-gray-300 text-gray-700 hover:border-danger hover:text-danger dark:border-gray-700 dark:text-gray-200"
-                }`}
+              <button
+                onClick={() => setPage((current) => Math.min(current + 1, pagination.totalPages))}
+                disabled={pagination.currentPage === pagination.totalPages}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:border-danger hover:text-danger disabled:pointer-events-none disabled:border-gray-200 disabled:text-gray-400 dark:border-gray-700 dark:text-gray-200 dark:disabled:border-gray-800 dark:disabled:text-gray-600"
               >
                 Next
-              </Link>
+              </button>
             </div>
           </nav>
         )}

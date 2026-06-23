@@ -15,10 +15,10 @@ import {
   TimeField,
 } from "@heroui/react";
 
-import { createDonationRequest } from "@/lib/actions/donation-request";
 import { useSession } from "@/lib/auth-client";
 import { districts, upazilas } from "@/data/bdgeoData";
 import { bloodGroups } from "@/data/bloodGroups";
+import { apiRequest } from "@/lib/api-client";
 
 const initialFormData = {
   recipientName: "",
@@ -63,14 +63,17 @@ const CreateDonationRequestPage = () => {
     setIsSubmitting(true);
 
     try {
-      const result = await createDonationRequest({
+      const { response, data } = await apiRequest("/api/donation-requests", {
+        method: "POST",
+        body: JSON.stringify({
         ...formData,
         donationDate: formData.donationDate?.toString() || "",
         donationTime: formData.donationTime?.toString() || "",
+        }),
       });
 
-      if (!result.success) {
-        toast.error(result.error);
+      if (!response.ok) {
+        toast.error(data.error || "Could not create the donation request.");
         return;
       }
 

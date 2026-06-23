@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { updateMyDonationRequest } from "@/lib/actions/donation-request";
 import { districts, upazilas } from "@/data/bdgeoData";
 import { bloodGroups } from "@/data/bloodGroups";
+import { apiRequest } from "@/lib/api-client";
 
 const EditRequestForm = ({ request }) => {
   const router = useRouter();
@@ -20,9 +20,12 @@ const EditRequestForm = ({ request }) => {
   const submit = async (event) => {
     event.preventDefault();
     setBusy(true);
-    const result = await updateMyDonationRequest(request.id, data);
+    const { response, data: payload } = await apiRequest(`/api/donation-requests/${request.id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
     setBusy(false);
-    if (!result.success) return toast.error(result.error);
+    if (!response.ok) return toast.error(payload.error || "Unable to update donation request.");
     toast.success("Donation request updated.");
     router.push("/dashboard/my-donation-requests");
     router.refresh();
