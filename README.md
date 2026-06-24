@@ -4,7 +4,7 @@ LifeFlow connects blood recipients, donors, volunteers, and administrators. User
 
 ## Live URL
 
-Add the deployed production URL here before submission.
+[https://life-flow-client.vercel.app/](https://life-flow-client.vercel.app/)
 
 ## Key features
 
@@ -49,10 +49,10 @@ Add the deployed production URL here before submission.
 Configure Stripe to send `checkout.session.completed` events to:
 
 ```text
-https://YOUR_DOMAIN/api/stripe/webhook
+https://life-flow-server-taupe.vercel.app/api/stripe/webhook
 ```
 
-For local testing, forward Stripe CLI events to `http://localhost:3000/api/stripe/webhook` and set the generated signing secret as `STRIPE_WEBHOOK_SECRET`.
+For local testing, forward Stripe CLI events to `http://localhost:4000/api/stripe/webhook` and set the generated signing secret as `STRIPE_WEBHOOK_SECRET`.
 
 ## Scripts
 
