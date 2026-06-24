@@ -1,4 +1,5 @@
-const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || "";
+const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:4000";
+console.log("server url begin use", serverUrl);
 
 let cachedToken = null;
 let cachedAt = 0;

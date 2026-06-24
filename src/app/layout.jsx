@@ -11,15 +11,14 @@ export const metadata = {
 
 const RootLayout = ({ children }) => {
   return (
-    <html
-      lang="en"
-      data-theme="dark"
-      className="h-full antialiased"
-    >
+    <html lang="en" data-theme="dark" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <AppShell navbar={<Navbar />} footer={<Footer />}>
+        {/* <AppShell navbar={<Navbar />} footer={<Footer />}>
           {children}
-        </AppShell>
+        </AppShell> */}
+        <Navbar />
+        {children}
+        <Footer />
 
         <ToastContainer position="top-right" autoClose={3000} />
       </body>
