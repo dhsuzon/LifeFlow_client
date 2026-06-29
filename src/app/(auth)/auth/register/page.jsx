@@ -49,7 +49,7 @@ const RegisterPage = () => {
     const formData = new FormData();
     formData.append("image", file);
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_IMGBB_URL}?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
+      `${process.env.NEXT_PUBLIC_IMGBB_API_URL}?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
       { method: "POST", body: formData },
     );
     const data = await response.json();
